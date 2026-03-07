@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>YouTube Looper</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" /> <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔁</text></svg>">
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+  </head>
+<style>
+  html {
+    background-color: #eee;
+  }
+
+  body {
+    height: 100vh;
+    background-color: #eee;
+    font-family: sans-serif;
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+  }
+
+  .controls-wrapper {
+    width: 20vw;
+    margin: 0 auto;
+    margin-top: 5vh;
+    border: 1px solid white;
+    display: flex;
+    flex-flow: column;
+    padding: 10px;
+  }
+
+  .loop-controls {
+    display: flex;
+  }
+
+  button {
+    color: white;
+    background-color: #3f51b5;
+    border-radius: 10px;
+  }
+</style>
+  <body>
+    <header>
+      <button id="dark-mode-toggle">Toggle Dark Mode 🌓</button>
+    </header>
+    <h1>YouTube Looper</h1>
+    <div>
+      <label for="youtube-url">Change URL:</label>
+      <input type="string" id="youtube-url" />
+      <button id="change-url-button">Go</button>
+    </div>
+    <br>
+
+    </div>
+    <main>
+      <div id="iframe-wrapper">
+        <iframe
+          id="youtube-video"
+          width="560"
+          height="315"
+          src="https://www.youtube.com/embed/iZLyMbwtQJs?enablejsapi=1&origin=http://localhost:8080"
+          frameborder="0"
+        ></iframe>
+      </div>
+
+      <div class="controls-wrapper">
+        <div class="loop-controls">
+          <div>
+            <label for="start-time">Start Time (h:m:s)</label>
+            <input type="string" id="start-time" />
+          </div>
+          <div>
+            <label for="end-time">End Time (h:m:s)</label>
+            <input type="string" id="end-time" />
+          </div>
+          <br>
+        </div>
+        <br>
+        <button id="set-loop">Set Loop</button>
+        <br>
+        <div>
+          <label for="speed-control">Speed control:</label>
+          <select id="speed-control">
+            <option value="0.25">0.25x</option>
+            <option value="0.5">0.5x</option>
+            <option value="1" selected>Normal</option>
+            <option value="1.5">1.5x</option>
+            <option value="2">2x</option>
+          </select>
+        </div>
+        <div>
+          <label for="player-size">Player size:</label>
+          <select id="player-size">
+            <option value="560x315" selected>Normal (560px)</option>
+            <option value="854x480">Wide (854px)</option>
+            <option value="1280x720">Full Width (1280px)</option>
+          </select>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      let player;
+      let loopStart = 0;
+      let loopEnd = 0;
+      let isLooping = false;
+      let darkMode = false;
+      let loopInterval = null;
+
+      function onYouTubeIframeAPIReady() {
+        player = new YT.Player('youtube-video', {
+          events: {
+            onStateChange: onPlayerStateChange,
+          },
+        });
+      }
+
+      function onPlayerStateChange(event) {
+        if (isLooping && event.data === YT.PlayerState.ENDED) {
+          player.seekTo(loopStart);
+          player.playVideo();
+        }
+
+        clearInterval(loopInterval);
+        if (isLooping && event.data === YT.PlayerState.PLAYING) {
+          loopInterval = setInterval(() => {
+            if (player.getCurrentTime() >= loopEnd) {
+              player.seekTo(loopStart);
+            }
+          }, 100);
+        }
+      }
+
+      function toSeconds(timeString) {
+        let seconds = 0;
+        timeString.split(':').reverse().forEach((s, i) => seconds += +s * 60**i);
+        return seconds;
+      }
+
+      function getPlayerIframe() {
+        return player ? player.getIframe() : document.getElementById('youtube-video');
+      }
+
+      function toggleDarkMode() {
+        darkMode = !darkMode;
+        document.body.style.filter = darkMode ? "invert(1)" : "invert(0)";
+        getPlayerIframe().style.filter = darkMode ? "invert(1)" : "invert(0)";
+      }
+
+      document.getElementById('set-loop').addEventListener('click', function () {
+        loopStart = toSeconds(document.getElementById('start-time').value);
+        loopEnd = toSeconds(document.getElementById('end-time').value);
+        if (loopStart >= 0 && loopEnd > loopStart) {
+          isLooping = true;
+          player.seekTo(loopStart);
+          player.playVideo();
+        }
+      });
+
+      document.getElementById('speed-control').addEventListener('change', function () {
+        const speed = parseFloat(this.value);
+        if (player && player.setPlaybackRate) {
+          player.setPlaybackRate(speed);
+        }
+      });
+
+      document.getElementById('player-size').addEventListener('change', function () {
+        const [w, h] = this.value.split('x');
+        const iframe = getPlayerIframe();
+        iframe.setAttribute('width', w);
+        iframe.setAttribute('height', h);
+      });
+
+      document.getElementById('dark-mode-toggle').addEventListener('click', function () {
+        toggleDarkMode();
+      });
+
+      document.getElementById('change-url-button').addEventListener('click', function () {
+        const existingIframe = getPlayerIframe();
+        existingIframe.parentNode.removeChild(existingIframe);
+
+        const rawUrl = document.getElementById('youtube-url').value;
+        const videoId = rawUrl.split("=")[1];
+        const sizeVal = document.getElementById('player-size').value;
+        const [w, h] = sizeVal.split('x');
+
+        const iframeWrapper = document.getElementById('iframe-wrapper');
+        const iframe = document.createElement("iframe");
+        iframe.setAttribute("id", "youtube-video");
+        iframe.setAttribute("src", `https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=http://localhost:8080`);
+        iframe.setAttribute("width", w);
+        iframe.setAttribute("height", h);
+        iframe.setAttribute("frameborder", "0");
+        iframeWrapper.appendChild(iframe);
+
+        isLooping = false;
+        clearInterval(loopInterval);
+        player = null;
+        onYouTubeIframeAPIReady();
+      });
+    </script>
+  </body>
+</html>
+
