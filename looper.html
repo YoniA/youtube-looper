@@ -8,105 +8,225 @@
     <script src="https://www.youtube.com/iframe_api"></script>
   </head>
 <style>
-  html {
-    background-color: #eee;
+  :root {
+    --bg: #111;
+    --surface: #1c1c1c;
+    --border: #2e2e2e;
+    --text: #ccc;
+    --text-dim: #666;
+    --accent: #5c6bc0;
+    --accent-hover: #7986cb;
+    --input-bg: #222;
+  }
+
+  [data-theme="light"] {
+    --bg: #f4f4f4;
+    --surface: #fff;
+    --border: #ddd;
+    --text: #222;
+    --text-dim: #999;
+    --accent: #3f51b5;
+    --accent-hover: #5c6bc0;
+    --input-bg: #fff;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, sans-serif;
+    font-size: 13px;
   }
 
   body {
-    height: 100vh;
-    background-color: #eee;
-    font-family: sans-serif;
     display: flex;
-    flex-flow: column;
+    flex-direction: column;
     align-items: center;
+    padding: 24px 16px 40px;
+    gap: 20px;
+  }
+
+  header {
+    width: 100%;
+    max-width: 860px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  h1 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    opacity: 0.5;
+  }
+
+  #dark-mode-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  #dark-mode-toggle:hover { border-color: var(--accent); color: var(--text); }
+
+  .url-bar {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    max-width: 560px;
+  }
+
+  .url-bar input {
+    flex: 1;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .url-bar input:focus { border-color: var(--accent); }
+
+  .url-bar button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 7px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+  .url-bar button:hover { background: var(--accent-hover); }
+
+  #iframe-wrapper {
+    line-height: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
   }
 
   .controls-wrapper {
-    width: 20vw;
-    margin: 0 auto;
-    margin-top: 5vh;
-    border: 1px solid white;
     display: flex;
-    flex-flow: column;
-    padding: 10px;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+    width: 100%;
+    max-width: 560px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
   }
 
-  .loop-controls {
+  .control-group {
     display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
 
-  button {
-    color: white;
-    background-color: #3f51b5;
-    border-radius: 10px;
+  label {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
   }
+
+  input[type="text"], select {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input[type="text"]:focus, select:focus { border-color: var(--accent); }
+  select { cursor: pointer; }
+
+  #set-loop {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 7px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    align-self: flex-end;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+  #set-loop:hover { background: var(--accent-hover); }
 </style>
   <body>
     <header>
-      <button id="dark-mode-toggle">Toggle Dark Mode 🌓</button>
+      <h1>YouTube Looper</h1>
+      <button id="dark-mode-toggle">Light mode</button>
     </header>
-    <h1>YouTube Looper</h1>
-    <div>
-      <label for="youtube-url">Change URL:</label>
-      <input type="string" id="youtube-url" />
-      <button id="change-url-button">Go</button>
-    </div>
-    <br>
 
+    <div class="url-bar">
+      <input type="text" id="youtube-url" placeholder="https://www.youtube.com/watch?v=..." />
+      <button id="change-url-button">Load</button>
     </div>
-    <main>
-      <div id="iframe-wrapper">
-        <iframe
-          id="youtube-video"
-          width="560"
-          height="315"
-          src="https://www.youtube.com/embed/iZLyMbwtQJs?enablejsapi=1&origin=http://localhost:8080"
-          frameborder="0"
-        ></iframe>
-      </div>
 
-      <div class="controls-wrapper">
-        <div class="loop-controls">
-          <div>
-            <label for="start-time">Start Time (h:m:s)</label>
-            <input type="string" id="start-time" />
-          </div>
-          <div>
-            <label for="end-time">End Time (h:m:s)</label>
-            <input type="string" id="end-time" />
-          </div>
-          <br>
-        </div>
-        <br>
-        <button id="set-loop">Set Loop</button>
-        <br>
-        <div>
-          <label for="speed-control">Speed control:</label>
-          <select id="speed-control">
-            <option value="0.25">0.25x</option>
-            <option value="0.5">0.5x</option>
-            <option value="1" selected>Normal</option>
-            <option value="1.5">1.5x</option>
-            <option value="2">2x</option>
-          </select>
-        </div>
-        <div>
-          <label for="player-size">Player size:</label>
-          <select id="player-size">
-            <option value="560x315" selected>Normal (560px)</option>
-            <option value="854x480">Wide (854px)</option>
-            <option value="1280x720">Full Width (1280px)</option>
-          </select>
-        </div>
+    <div id="iframe-wrapper">
+      <iframe
+        id="youtube-video"
+        width="560"
+        height="315"
+        src="https://www.youtube.com/embed/iZLyMbwtQJs?enablejsapi=1&origin=http://localhost:8080"
+        frameborder="0"
+      ></iframe>
+    </div>
+
+    <div class="controls-wrapper">
+      <div class="control-group">
+        <label for="start-time">Start (h:m:s)</label>
+        <input type="text" id="start-time" placeholder="0:00" style="width:90px" />
       </div>
-    </main>
+      <div class="control-group">
+        <label for="end-time">End (h:m:s)</label>
+        <input type="text" id="end-time" placeholder="0:30" style="width:90px" />
+      </div>
+      <button id="set-loop">Set Loop</button>
+      <div class="control-group">
+        <label for="speed-control">Speed</label>
+        <select id="speed-control">
+          <option value="0.25">0.25x</option>
+          <option value="0.5">0.5x</option>
+          <option value="1" selected>1x</option>
+          <option value="1.5">1.5x</option>
+          <option value="2">2x</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="player-size">Size</label>
+        <select id="player-size">
+          <option value="560x315" selected>Normal</option>
+          <option value="854x480">Wide</option>
+          <option value="1280x720">Full</option>
+        </select>
+      </div>
+    </div>
 
     <script>
       let player;
       let loopStart = 0;
       let loopEnd = 0;
       let isLooping = false;
-      let darkMode = false;
+      let darkMode = true;
       let loopInterval = null;
 
       function onYouTubeIframeAPIReady() {
@@ -145,8 +265,8 @@
 
       function toggleDarkMode() {
         darkMode = !darkMode;
-        document.body.style.filter = darkMode ? "invert(1)" : "invert(0)";
-        getPlayerIframe().style.filter = darkMode ? "invert(1)" : "invert(0)";
+        document.documentElement.setAttribute('data-theme', darkMode ? '' : 'light');
+        document.getElementById('dark-mode-toggle').textContent = darkMode ? 'Light mode' : 'Dark mode';
       }
 
       document.getElementById('set-loop').addEventListener('click', function () {
