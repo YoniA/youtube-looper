@@ -169,6 +169,101 @@
     white-space: nowrap;
   }
   #set-loop:hover { background: var(--accent-hover); }
+
+  .table-section {
+    width: 100%;
+    max-width: 860px;
+  }
+
+  .table-section h2 {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  thead th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface); }
+
+  tbody td {
+    padding: 2px 4px;
+  }
+
+  tbody td[contenteditable] {
+    padding: 7px 10px;
+    outline: none;
+    color: var(--text);
+    min-width: 60px;
+    border-radius: 4px;
+  }
+  tbody td[contenteditable]:focus {
+    background: var(--surface);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+  tbody td[contenteditable].url-cell { min-width: 220px; color: var(--text-dim); }
+  tbody td[contenteditable].url-cell:focus { color: var(--text); }
+
+  .play-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1;
+    transition: color 0.15s, background 0.15s;
+  }
+  .play-btn:hover { color: #81c995; background: rgba(129,201,149,0.08); }
+
+  .delete-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1;
+    transition: color 0.15s, background 0.15s;
+  }
+  .delete-btn:hover { color: #e57373; background: rgba(229,115,115,0.08); }
+
+  #add-row-btn {
+    margin-top: 10px;
+    background: none;
+    border: 1px dashed var(--border);
+    color: var(--text-dim);
+    padding: 6px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    width: 100%;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  #add-row-btn:hover { border-color: var(--accent); color: var(--text); }
 </style>
   <body>
     <header>
@@ -221,6 +316,33 @@
       </div>
     </div>
 
+    <div class="table-section">
+      <h2>Saved Loops</h2>
+      <table id="loops-table">
+        <thead>
+          <tr>
+            <th>URL</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Notes</th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="loops-tbody">
+          <tr>
+            <td contenteditable="true" class="url-cell">https://www.youtube.com/watch?v=iZLyMbwtQJs</td>
+            <td contenteditable="true">0:55</td>
+            <td contenteditable="true">1:32</td>
+            <td contenteditable="true">KB full body exercise</td>
+            <td><button class="play-btn" onclick="playRow(this)">▶</button></td>
+            <td><button class="delete-btn" onclick="deleteRow(this)">×</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <button id="add-row-btn">+ Add row</button>
+    </div>
+
     <script>
       let player;
       let loopStart = 0;
@@ -236,6 +358,7 @@
           },
         });
       }
+
 
       function onPlayerStateChange(event) {
         if (isLooping && event.data === YT.PlayerState.ENDED) {
@@ -295,6 +418,78 @@
 
       document.getElementById('dark-mode-toggle').addEventListener('click', function () {
         toggleDarkMode();
+      });
+
+      function playRow(btn) {
+        const cells = btn.closest('tr').querySelectorAll('td[contenteditable]');
+        const url = cells[0].textContent.trim();
+        const start = cells[1].textContent.trim();
+        const end = cells[2].textContent.trim();
+
+        const videoId = url.split("=")[1];
+        if (!videoId) return;
+
+        // Update the URL input fields to reflect what's loaded
+        document.getElementById('youtube-url').value = url;
+        document.getElementById('start-time').value = start;
+        document.getElementById('end-time').value = end;
+
+        // Swap the iframe
+        const existingIframe = getPlayerIframe();
+        existingIframe.parentNode.removeChild(existingIframe);
+
+        const sizeVal = document.getElementById('player-size').value;
+        const [w, h] = sizeVal.split('x');
+        const iframeWrapper = document.getElementById('iframe-wrapper');
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('id', 'youtube-video');
+        iframe.setAttribute('src', `https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=http://localhost:8080`);
+        iframe.setAttribute('width', w);
+        iframe.setAttribute('height', h);
+        iframe.setAttribute('frameborder', '0');
+        iframeWrapper.appendChild(iframe);
+
+        isLooping = false;
+        clearInterval(loopInterval);
+        player = null;
+
+        // Wait for the player to be ready, then start the loop
+        const origReady = window.onYouTubeIframeAPIReady;
+        player = new YT.Player('youtube-video', {
+          events: {
+            onReady: function () {
+              loopStart = toSeconds(start);
+              loopEnd = toSeconds(end);
+              if (loopStart >= 0 && loopEnd > loopStart) {
+                isLooping = true;
+                player.seekTo(loopStart);
+                player.playVideo();
+              }
+            },
+            onStateChange: onPlayerStateChange,
+          },
+        });
+
+        // Scroll player into view
+        document.getElementById('iframe-wrapper').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      function deleteRow(btn) {
+        btn.closest('tr').remove();
+      }
+
+      document.getElementById('add-row-btn').addEventListener('click', function () {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td contenteditable="true" class="url-cell"></td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+          <td><button class="play-btn" onclick="playRow(this)">▶</button></td>
+          <td><button class="delete-btn" onclick="deleteRow(this)">×</button></td>
+        `;
+        document.getElementById('loops-tbody').appendChild(tr);
+        tr.querySelector('.url-cell').focus();
       });
 
       document.getElementById('change-url-button').addEventListener('click', function () {
