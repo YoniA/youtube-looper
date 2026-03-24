@@ -3,7 +3,7 @@
   <head>
     <title>YouTube Looper</title>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" /> <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔁</text></svg>">
+    <meta name="viewport" content="width=device-width, initial-scale=1" /> <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔁</text></svg>">
 
     <script src="https://www.youtube.com/iframe_api"></script>
   </head>
@@ -37,7 +37,7 @@
     background: var(--bg);
     color: var(--text);
     font-family: system-ui, sans-serif;
-    font-size: 13px;
+    font-size: 15px;
   }
 
   body {
@@ -57,7 +57,7 @@
   }
 
   h1 {
-    font-size: 15px;
+    font-size: 1.2em;
     font-weight: 600;
     letter-spacing: 0.04em;
     color: var(--text);
@@ -71,7 +71,7 @@
     padding: 5px 10px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 1em;
     transition: border-color 0.2s, color 0.2s;
   }
   #dark-mode-toggle:hover { border-color: var(--accent); color: var(--text); }
@@ -80,7 +80,7 @@
     display: flex;
     gap: 8px;
     width: 100%;
-    max-width: 560px;
+    max-width: var(--player-max-width, 560px);
   }
 
   .url-bar input {
@@ -90,7 +90,7 @@
     color: var(--text);
     padding: 7px 10px;
     border-radius: 6px;
-    font-size: 12px;
+    font-size: 1em;
     outline: none;
     transition: border-color 0.2s;
   }
@@ -103,52 +103,65 @@
     padding: 7px 16px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 1em;
     font-weight: 600;
     transition: background 0.2s;
   }
   .url-bar button:hover { background: var(--accent-hover); }
 
   #iframe-wrapper {
-    line-height: 0;
+    width: 100%;
+    max-width: var(--player-max-width, 560px);
+    aspect-ratio: 16 / 9;
     border-radius: 8px;
     overflow: hidden;
     border: 1px solid var(--border);
   }
 
+  #iframe-wrapper iframe {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
   .controls-wrapper {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: flex-end;
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "start end   loop"
+      "speed size  loop";
+    gap: 10px 12px;
+    align-items: stretch;
     width: 100%;
-    max-width: 560px;
+    max-width: var(--player-max-width, 560px);
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 14px 16px;
   }
 
-  .control-group {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
+  .control-group { display: flex; flex-direction: column; gap: 4px; }
+  .control-group.start  { grid-area: start; }
+  .control-group.end    { grid-area: end; }
+  .control-group.speed  { grid-area: speed; }
+  .control-group.size   { grid-area: size; }
 
   label {
-    font-size: 11px;
+    font-size: 0.7em;
     color: var(--text-dim);
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
 
   input[type="text"], select {
+    width: 100%;
     background: var(--input-bg);
     border: 1px solid var(--border);
     color: var(--text);
     padding: 6px 8px;
     border-radius: 6px;
-    font-size: 12px;
+    font-size: 1em;
     outline: none;
     transition: border-color 0.2s;
   }
@@ -156,27 +169,40 @@
   select { cursor: pointer; }
 
   #set-loop {
+    grid-area: loop;
     background: var(--accent);
     color: #fff;
     border: none;
-    padding: 7px 16px;
+    padding: 0 20px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 1em;
     font-weight: 600;
-    align-self: flex-end;
-    transition: background 0.2s;
     white-space: nowrap;
+    transition: background 0.2s;
+    align-self: stretch;
   }
   #set-loop:hover { background: var(--accent-hover); }
+
+  @media (max-width: 400px) {
+    .controls-wrapper {
+      grid-template-columns: 1fr 1fr;
+      grid-template-areas:
+        "start end"
+        "loop  loop"
+        "speed size";
+    }
+    #set-loop { padding: 8px; }
+  }
 
   .table-section {
     width: 100%;
     max-width: 860px;
+    margin-top: 24px;
   }
 
   .table-section h2 {
-    font-size: 11px;
+    font-size: 0.9em;
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -187,12 +213,12 @@
   table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 12px;
+    font-size: 1em;
   }
 
   thead th {
     text-align: left;
-    font-size: 11px;
+    font-size: 0.75em;
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -225,6 +251,49 @@
   tbody td[contenteditable].url-cell { min-width: 220px; color: var(--text-dim); }
   tbody td[contenteditable].url-cell:focus { color: var(--text); }
 
+  @media (max-width: 600px) {
+    table, thead, tbody, tr, th, td { display: block; }
+    thead { display: none; }
+
+    tbody tr {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      padding: 8px;
+      background: var(--surface);
+    }
+    tbody tr:last-child { border: 1px solid var(--border); }
+    tbody tr:hover { background: var(--surface); }
+
+    /* Row 1: URL full width */
+    td.url-cell    { order: 1; flex: 0 0 100%; min-width: 0; word-break: break-all; }
+    /* Row 2: start + end + buttons */
+    td.start-cell  { order: 2; flex: 1; min-width: 0; }
+    td.end-cell    { order: 3; flex: 1; min-width: 0; }
+    td.play-cell   { order: 4; flex: 0 0 auto; }
+    td.delete-cell { order: 5; flex: 0 0 auto; }
+    /* Row 3: notes full width */
+    td.notes-cell  { order: 6; flex: 0 0 100%; min-width: 0; }
+
+    tbody td[contenteditable] {
+      padding: 5px 6px;
+      min-width: 0;
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-size: 1em;
+      color: var(--text);
+    }
+    td.url-cell[contenteditable] { color: var(--text-dim); font-size: 0.85em; }
+    td.url-cell[contenteditable]:focus { color: var(--text); }
+
+    td.play-cell, td.delete-cell { padding: 0; }
+  }
+
   .play-btn {
     background: none;
     border: none;
@@ -232,7 +301,7 @@
     cursor: pointer;
     padding: 4px 8px;
     border-radius: 4px;
-    font-size: 14px;
+    font-size: 1em;
     line-height: 1;
     transition: color 0.15s, background 0.15s;
   }
@@ -245,7 +314,7 @@
     cursor: pointer;
     padding: 4px 8px;
     border-radius: 4px;
-    font-size: 14px;
+    font-size: 1em;
     line-height: 1;
     transition: color 0.15s, background 0.15s;
   }
@@ -257,6 +326,7 @@
     border: 1px dashed var(--border);
     color: var(--text-dim);
     padding: 6px 16px;
+    font-size: 1em;
     border-radius: 6px;
     cursor: pointer;
     font-size: 12px;
@@ -264,6 +334,12 @@
     transition: border-color 0.2s, color 0.2s;
   }
   #add-row-btn:hover { border-color: var(--accent); color: var(--text); }
+
+  .table-note {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
 </style>
   <body>
     <header>
@@ -279,23 +355,21 @@
     <div id="iframe-wrapper">
       <iframe
         id="youtube-video"
-        width="560"
-        height="315"
         frameborder="0"
       ></iframe>
     </div>
 
     <div class="controls-wrapper">
-      <div class="control-group">
+      <div class="control-group start">
         <label for="start-time">Start (h:m:s)</label>
-        <input type="text" id="start-time" placeholder="0:00" style="width:90px" />
+        <input type="text" id="start-time" placeholder="0:00" />
       </div>
-      <div class="control-group">
+      <div class="control-group end">
         <label for="end-time">End (h:m:s)</label>
-        <input type="text" id="end-time" placeholder="0:30" style="width:90px" />
+        <input type="text" id="end-time" placeholder="0:30" />
       </div>
       <button id="set-loop">Set Loop</button>
-      <div class="control-group">
+      <div class="control-group speed">
         <label for="speed-control">Speed</label>
         <select id="speed-control">
           <option value="0.25">0.25x</option>
@@ -305,12 +379,11 @@
           <option value="2">2x</option>
         </select>
       </div>
-      <div class="control-group">
+      <div class="control-group size">
         <label for="player-size">Size</label>
         <select id="player-size">
           <option value="560x315" selected>Normal</option>
           <option value="854x480">Wide</option>
-          <option value="1280x720">Full</option>
         </select>
       </div>
     </div>
@@ -331,15 +404,16 @@
         <tbody id="loops-tbody">
           <tr>
             <td contenteditable="true" class="url-cell">https://www.youtube.com/watch?v=iZLyMbwtQJs</td>
-            <td contenteditable="true">0:55</td>
-            <td contenteditable="true">1:32</td>
-            <td contenteditable="true">KB full body exercise</td>
-            <td><button class="play-btn" onclick="playRow(this)">▶</button></td>
-            <td><button class="delete-btn" onclick="deleteRow(this)">×</button></td>
+            <td contenteditable="true" class="start-cell">0:55</td>
+            <td contenteditable="true" class="end-cell">1:32</td>
+            <td contenteditable="true" class="notes-cell">KB full body exercise</td>
+            <td class="play-cell"><button class="play-btn" onclick="playRow(this)">▶</button></td>
+            <td class="delete-cell"><button class="delete-btn" onclick="deleteRow(this)">×</button></td>
           </tr>
         </tbody>
       </table>
       <button id="add-row-btn">+ Add row</button>
+      <p class="table-note">Loops are saved in memory only and will be lost on refresh.</p>
     </div>
 
     <script>
@@ -388,6 +462,7 @@
         return player ? player.getIframe() : document.getElementById('youtube-video');
       }
 
+
       function toggleDarkMode() {
         darkMode = !darkMode;
         document.documentElement.setAttribute('data-theme', darkMode ? '' : 'light');
@@ -412,10 +487,8 @@
       });
 
       document.getElementById('player-size').addEventListener('change', function () {
-        const [w, h] = this.value.split('x');
-        const iframe = getPlayerIframe();
-        iframe.setAttribute('width', w);
-        iframe.setAttribute('height', h);
+        const maxWidth = this.value.split('x')[0] + 'px';
+        document.documentElement.style.setProperty('--player-max-width', maxWidth);
       });
 
       document.getElementById('dark-mode-toggle').addEventListener('click', function () {
@@ -440,14 +513,10 @@
         const existingIframe = getPlayerIframe();
         existingIframe.parentNode.removeChild(existingIframe);
 
-        const sizeVal = document.getElementById('player-size').value;
-        const [w, h] = sizeVal.split('x');
         const iframeWrapper = document.getElementById('iframe-wrapper');
         const iframe = document.createElement('iframe');
         iframe.setAttribute('id', 'youtube-video');
         iframe.setAttribute('src', `https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=${window.location.origin}`);
-        iframe.setAttribute('width', w);
-        iframe.setAttribute('height', h);
         iframe.setAttribute('frameborder', '0');
         iframeWrapper.appendChild(iframe);
 
@@ -484,11 +553,11 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td contenteditable="true" class="url-cell"></td>
-          <td contenteditable="true"></td>
-          <td contenteditable="true"></td>
-          <td contenteditable="true"></td>
-          <td><button class="play-btn" onclick="playRow(this)">▶</button></td>
-          <td><button class="delete-btn" onclick="deleteRow(this)">×</button></td>
+          <td contenteditable="true" class="start-cell"></td>
+          <td contenteditable="true" class="end-cell"></td>
+          <td contenteditable="true" class="notes-cell"></td>
+          <td class="play-cell"><button class="play-btn" onclick="playRow(this)">▶</button></td>
+          <td class="delete-cell"><button class="delete-btn" onclick="deleteRow(this)">×</button></td>
         `;
         document.getElementById('loops-tbody').appendChild(tr);
         tr.querySelector('.url-cell').focus();
@@ -500,15 +569,11 @@
 
         const rawUrl = document.getElementById('youtube-url').value;
         const videoId = rawUrl.split("=")[1];
-        const sizeVal = document.getElementById('player-size').value;
-        const [w, h] = sizeVal.split('x');
 
         const iframeWrapper = document.getElementById('iframe-wrapper');
         const iframe = document.createElement("iframe");
         iframe.setAttribute("id", "youtube-video");
         iframe.setAttribute("src", `https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=${window.location.origin}`);
-        iframe.setAttribute("width", w);
-        iframe.setAttribute("height", h);
         iframe.setAttribute("frameborder", "0");
         iframeWrapper.appendChild(iframe);
 
