@@ -33,7 +33,6 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   html, body {
-    height: 100%;
     background: var(--bg);
     color: var(--text);
     font-family: system-ui, sans-serif;
@@ -112,7 +111,6 @@
   #iframe-wrapper {
     width: 100%;
     max-width: var(--player-max-width, 560px);
-    aspect-ratio: 16 / 9;
     border-radius: 8px;
     overflow: hidden;
     border: 1px solid var(--border);
@@ -121,7 +119,6 @@
   #iframe-wrapper iframe {
     display: block;
     width: 100% !important;
-    height: 100% !important;
   }
 
   .controls-wrapper {
@@ -427,9 +424,25 @@
       document.getElementById('youtube-video').src =
         `https://www.youtube.com/embed/iZLyMbwtQJs?enablejsapi=1&origin=${window.location.origin}`;
 
+      function fitIframe() {
+        requestAnimationFrame(() => {
+          const wrapper = document.getElementById('iframe-wrapper');
+          const iframe = getPlayerIframe();
+          if (wrapper && iframe && wrapper.offsetWidth > 0) {
+            const h = Math.round(wrapper.offsetWidth * 9 / 16);
+            iframe.style.setProperty('height', h + 'px', 'important');
+          }
+        });
+      }
+
+      const wrapperObserver = new ResizeObserver(fitIframe);
+      wrapperObserver.observe(document.getElementById('iframe-wrapper'));
+      window.addEventListener('resize', fitIframe);
+
       function onYouTubeIframeAPIReady() {
         player = new YT.Player('youtube-video', {
           events: {
+            onReady: fitIframe,
             onStateChange: onPlayerStateChange,
           },
         });
@@ -489,6 +502,7 @@
       document.getElementById('player-size').addEventListener('change', function () {
         const maxWidth = this.value.split('x')[0] + 'px';
         document.documentElement.style.setProperty('--player-max-width', maxWidth);
+        fitIframe();
       });
 
       document.getElementById('dark-mode-toggle').addEventListener('click', function () {
@@ -529,6 +543,7 @@
         player = new YT.Player('youtube-video', {
           events: {
             onReady: function () {
+              fitIframe();
               loopStart = toSeconds(start);
               loopEnd = toSeconds(end);
               if (loopStart >= 0 && loopEnd > loopStart) {
@@ -581,6 +596,7 @@
         clearInterval(loopInterval);
         player = null;
         onYouTubeIframeAPIReady();
+        fitIframe();
       });
     </script>
   </body>
